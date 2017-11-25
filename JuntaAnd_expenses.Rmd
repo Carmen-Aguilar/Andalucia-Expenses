@@ -34,7 +34,7 @@ JuntaAnd_gastos <- read_excel("Gastos en viajes de altos cargos 2015_0.xlsx", ra
 ```
 I have know the correct table that I want to. 
 
-##Second file
+## Second file
 
 I import the second document as I did before.
 ```{r}
@@ -47,7 +47,7 @@ I got a column with NA, because it was empty in the original file. I replace NA 
 JuntaAnd_gastos2[is.na(JuntaAnd_gastos2)] <- 0
 ```
 
-##Merging
+## Merging
 
 To have both cleaned tables in one, I use merge. With "by"", I <strong>specify the common columns</strong> so as to avoid repetition. 
 
@@ -58,7 +58,7 @@ View(gastos)
 
 The first and the second columns have the same information. One is the department and the other is the person in charge. I could get rid off one of them running "gastos <- gastos[-c(1)]. But I'll keep it so as to avoid looking for the regional ministers of each department. 
 
-##Renaming columns
+## Renaming columns
 
 As I had several columns with the same name, R renamed them with .x and .y at the end of the name to make a difference. However, I prefer to have the years instead of x and y.
 So I look for <strong>"Find and replace"</strong>.
@@ -69,7 +69,7 @@ names(gastos) <- gsub(".y", " 2016", names(gastos))
 View(gastos)
 ```
 
-#Understanding
+# Understanding
 
 Running summary to see what I get.
 
@@ -80,7 +80,7 @@ I've got the minimum and the maximum amount for each category and for the totals
 
 I can see that there is big difference about the amount of money spending by Ministers.
 
-#Comparing
+# Comparing
 
 I compare the Total amount for 2015 and 2016 in each row to see which minister increased the most, and store it in a new column. 
 
@@ -105,7 +105,7 @@ And, finally, I find out the difference between the total spent in 2015 and in 2
 rm(Total15)
 rm(Total16)
 ```
-#Who the most
+# Who the most
 
 I want to find out names to know who spent the most in each year. <strong>Which.max</strong> gives me the number of the row that I am looking for. And, after I look for the name of this number. 
 
@@ -134,7 +134,7 @@ max(gastos$variacionTotal)
 gastos$Titular[which.min(gastos$variacionTotal)]
 min(gastos$variacionTotal)
 ```
-##Looking for someone specific
+## Looking for someone specific
 I want to see the data regarding the regional president. 
 
 ```{r}
@@ -162,7 +162,7 @@ sort(gastos$proporcion2016, decreasing = TRUE)
 
 In the ranking by year, she was in third position in 2015 and in second position in 2016. She was the second by expenses in 2016. Her growth between these two years made up to 90%, being the 8th whose income arised the most.   
 
-#Subset
+## Subset
 I look for the ministers whose expenses rised more than 100 between 2015 and 2016. So I create a subset. 
 
 ```{r}
@@ -170,7 +170,7 @@ subset(gastos, gastos$variacionTotal > 100)
 ```
 
 
-#Categories
+## Categories
 
 How much each category represents in the Total?
 ```{r}
@@ -185,7 +185,7 @@ I've found some <strong>problems because of the accents in the names of the colu
 sum(((sum(gastos[3]) / sum(gastos$`Total 2015`))*100), ((sum(gastos[4]) / sum(gastos$`Total 2015`))*100), ((sum(gastos[5]) / sum(gastos$`Total 2015`))*100))
 ```
 
-#Visualisation
+# Visualisation
 
 Making visual the rise of each Minister between 2015 and 2016.
 
@@ -209,4 +209,4 @@ barplot(gastos$variacionTotal,
         )
 ```
 
-I couldn't fix the y axis so as to see the names. But, visualisation is not the best thing to do in R. I consider it would be useful to download the table and visualize with other tools. 
+With this code, R creates a bar chart. However, visualisation is not the best thing to do in R. I consider it would be useful to download the table and visualize with other tools. 
