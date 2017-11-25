@@ -1,0 +1,212 @@
+---
+title: "Joining data"
+output: html_notebook
+---
+
+I have two different excel documents and I want to work with them in one table, because they are expenses from the same regional Ministers, but different years. 
+
+# Importing data
+I put the documents in the same folder than my R project. In the "Files" menu, I check that <strong>they are .xls and .xlsx</strong>. I need then to install a package, so that R can read the excel data and we can work with them.  
+```{r}
+install.packages("readxl")
+```
+
+And then, I have to say that the package is stored in the library. 
+```{r}
+library(readxl)
+```
+
+Now, I import the data with read_excel, which read .xls and .xlsx
+```{r}
+JuntaAnd_gastos <- read_excel("Gastos en viajes de altos cargos 2015_0.xlsx")
+```
+Looking at the imported table, I realized that what I want as header is in row 3, and I don't actually need the first rows. 
+
+I tried with the argument <strong>"skip"</strong>. But checking in the original excel, I realized that the header is in row 5.
+```{r}
+JuntaAnd_gastos <- read_excel("Gastos en viajes de altos cargos 2015_0.xlsx", skip = 5)
+```
+
+However, I also realized that the last two rows are useless. So, instead of skip, <strong>it would be easier to select the rows I'm interested in</strong>. 
+
+```{r}
+JuntaAnd_gastos <- read_excel("Gastos en viajes de altos cargos 2015_0.xlsx", range = cell_rows(6:20))
+```
+I have know the correct table that I want to. 
+
+##Second file
+
+I import the second document as I did before.
+```{r}
+JuntaAnd_gastos2 <- read_excel("gastos_en_viajes_2016.xls", range = cell_rows(6:20))
+class(JuntaAnd_gastos2$Manutención)
+class(JuntaAnd_gastos$Manutención)
+```
+I got a column with NA, because it was empty in the original file. I replace NA as 0.
+```{r}
+JuntaAnd_gastos2[is.na(JuntaAnd_gastos2)] <- 0
+```
+
+##Merging
+
+To have both cleaned tables in one, I use merge. With "by"", I <strong>specify the common columns</strong> so as to avoid repetition. 
+
+```{r}
+gastos <- merge(JuntaAnd_gastos, JuntaAnd_gastos2, by=c("Titular", "Presidencia / Consejerías"))
+View(gastos)
+```
+
+The first and the second columns have the same information. One is the department and the other is the person in charge. I could get rid off one of them running "gastos <- gastos[-c(1)]. But I'll keep it so as to avoid looking for the regional ministers of each department. 
+
+##Renaming columns
+
+As I had several columns with the same name, R renamed them with .x and .y at the end of the name to make a difference. However, I prefer to have the years instead of x and y.
+So I look for <strong>"Find and replace"</strong>.
+
+```{r}
+names(gastos) <- gsub(".x", " 2015", names(gastos))
+names(gastos) <- gsub(".y", " 2016", names(gastos))
+View(gastos)
+```
+
+#Understanding
+
+Running summary to see what I get.
+
+```{r}
+summary(gastos)
+```
+I've got the minimum and the maximum amount for each category and for the totals, as well as the mean and median. 
+
+I can see that there is big difference about the amount of money spending by Ministers.
+
+#Comparing
+
+I compare the Total amount for 2015 and 2016 in each row to see which minister increased the most, and store it in a new column. 
+
+```{r}
+gastos$variacionTotal <- ((gastos$`Total 2016` - gastos$`Total 2015`) / gastos$`Total 2015`)*100
+```
+
+I can now go to my "gastos" table and order it in decreasing or increasing order to see who has the strongest variation. 
+
+I would like also to know the spending proportion of each minister within its year. And, again, I wanto to keep it in new columns.
+
+```{r}
+gastos$proporcion2015 <- (gastos$`Total 2015` / sum(gastos$`Total 2015`))*100
+gastos$proporcion2016 <- (gastos$`Total 2016` / sum(gastos$`Total 2016`))*100
+View(gastos)
+```
+
+And, finally, I find out the difference between the total spent in 2015 and in 2016 in all the Ministers combined. This time, I just want to see the increase, without storing it.  
+
+```{r}
+((sum(gastos$`Total 2016`) - sum(gastos$`Total 2015`))/sum(gastos$`Total 2015`))*100
+rm(Total15)
+rm(Total16)
+```
+#Who the most
+
+I want to find out names to know who spent the most in each year. <strong>Which.max</strong> gives me the number of the row that I am looking for. And, after I look for the name of this number. 
+
+```{r}
+which.max(gastos$`Total 2015`)
+max(gastos$`Total 2015`)
+max(gastos$proporcion2015)
+```
+```{r}
+gastos$Titular[10]
+```
+So, María del Carmen Ortiz Rivas spent the most in 2015. The quantity was 6,067.56 euros, what means 20.25% of the whole expenses in 2015. 
+
+But, <strong>there is another way of doing this in one simple row:</strong>
+```{r}
+gastos$Titular[which.max(gastos$`Total 2016`)]
+max(gastos$`Total 2016`)
+max(gastos$proporcion2016)
+```
+She repeated in 2016 as the minister who spent the most. The quantity rised about 3,500 euros, but the percentage was similar. 
+
+I look now for the big variation in each year
+```{r}
+gastos$Titular[which.max(gastos$variacionTotal)]
+max(gastos$variacionTotal)
+gastos$Titular[which.min(gastos$variacionTotal)]
+min(gastos$variacionTotal)
+```
+##Looking for someone specific
+I want to see the data regarding the regional president. 
+
+```{r}
+gastos[["Titular"]]
+```
+
+She is in the row 14, so I want all the data in this row
+```{r}
+gastos[14,]
+```
+
+I want to know her position in the column "variación Total" and "proporción" in both years. 
+
+```{r}
+sort(gastos$variacionTotal, decreasing = TRUE)
+```
+
+```{r}
+sort(gastos$proporcion2015, decreasing = TRUE)
+```
+
+```{r}
+sort(gastos$proporcion2016, decreasing = TRUE)
+```
+
+In the ranking by year, she was in third position in 2015 and in second position in 2016. She was the second by expenses in 2016. Her growth between these two years made up to 90%, being the 8th whose income arised the most.   
+
+#Subset
+I look for the ministers whose expenses rised more than 100 between 2015 and 2016. So I create a subset. 
+
+```{r}
+subset(gastos, gastos$variacionTotal > 100)
+```
+
+
+#Categories
+
+How much each category represents in the Total?
+```{r}
+(sum(gastos$`Alojamiento 2015`) / sum(gastos$`Total 2015`))*100
+(sum(gastos$`Locomoción 2015`) / sum(gastos$`Total 2015`))*100
+```
+I've found some <strong>problems because of the accents in the names of the columns. So I use the number of the column</strong> in square brackets instead of the name. 
+```{r}
+(sum(gastos[3]) / sum(gastos$`Total 2015`))*100
+(sum(gastos[4]) / sum(gastos$`Total 2015`))*100
+(sum(gastos[5]) / sum(gastos$`Total 2015`))*100
+sum(((sum(gastos[3]) / sum(gastos$`Total 2015`))*100), ((sum(gastos[4]) / sum(gastos$`Total 2015`))*100), ((sum(gastos[5]) / sum(gastos$`Total 2015`))*100))
+```
+
+#Visualisation
+
+Making visual the rise of each Minister between 2015 and 2016.
+
+```{r}
+barplot(gastos$variacionTotal,
+        #first the object
+         names.arg = gastos$Titular,
+        #then the names of each bars to be set beneath
+        horiz = "TRUE",
+        #Transforming the chart from vertical to horizontal
+        col =ifelse(gastos$variacionTotal < 0, "red", "green"), 
+        #setting different colours depending on the number is negative or not
+        main = "Variación gasto", 
+        #Title of the chart and subtitle, wiht the titles for x and y axes.  
+        sub = "% entre 2015 y 2016", xlab = "%", ylab = "Consejeros",
+        #reducing the size of the values in both axes, cex.axis for numbers and cex.names for names.
+        cex.axis = 0.8,
+        cex.names = 0.7,
+        #with argument las in position 2, I change the position to vertical.
+        las=2
+        )
+```
+
+I couldn't fix the y axis so as to see the names. But, visualisation is not the best thing to do in R. I consider it would be useful to download the table and visualize with other tools. 
